@@ -8,7 +8,7 @@ export default {
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
-    newArchEnabled: true, 
+    newArchEnabled: true,
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
@@ -37,6 +37,12 @@ export default {
     },
     extra: {
       expoPublicGoogleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
+    },
+    doctor: {
+      reactNativeDirectoryCheck: {
+        exclude: ["dotenv", "react-native-maps"],
+        listUnknownPackages: false
+      }
     }
   }
 };
