@@ -1,10 +1,11 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# Dependencies
 node_modules/
 
 # Expo
 .expo/
+.expo-shared/
 dist/
 web-build/
 expo-env.d.ts
@@ -21,7 +22,7 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
-# debug
+# Debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
@@ -30,8 +31,17 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# Environment
+.env
 .env*.local
 
-# typescript
+# TypeScript
 *.tsbuildinfo
+
+# Misc
+*.log
+*.swp
+*.swo
+*.bak
+*.tmp
+__pycache__/
