@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Button } from '@rneui/themed';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +13,10 @@ const ButtonComponent = ({
   isGateLoading,
   setIsGateLoading,
 }) => {
+  useEffect(() => {
+    console.log('ButtonComponent mounted, showGatesButton:', showGatesButton);
+  }, [showGatesButton]);
+
   return (
     <View style={styles.container}>
       <Button
@@ -64,13 +68,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 8, // Lower than SearchComponent
+    zIndex: 8, // Lowered zIndex
+    opacity: 1,
+    pointerEvents: 'box-none', // Allow touches to pass through to the map
   },
   floatingButton: {
     position: 'absolute',
     right: 20,
     top: 120,
     borderRadius: 25,
+    zIndex: 9,
+    opacity: 1,
   },
   floatingButtonStyle: {
     backgroundColor: '#00aaff',
@@ -79,6 +87,7 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
+    opacity: 1,
   },
   bottomRow: {
     position: 'absolute',
@@ -87,6 +96,8 @@ const styles = StyleSheet.create({
     right: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    zIndex: 9,
+    opacity: 1,
   },
   button: {
     flex: 1,
@@ -96,6 +107,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#00aaff',
     borderRadius: 5,
     paddingVertical: 10,
+    opacity: 1,
   },
   buttonText: {
     color: 'white',
@@ -103,15 +115,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loadingOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 9, // Higher than container but lower than SearchComponent
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9,
+    opacity: 1,
   },
   loadingButton: {
     width: '80%',

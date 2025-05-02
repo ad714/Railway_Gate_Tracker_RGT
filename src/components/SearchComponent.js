@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, TouchableOpacity, FlatList, ActivityIndicator, Text } from 'react-native';
-import { SearchBar } from '@rneui/themed';
+import React, { useEffect } from 'react';
+import { View, TextInput, FlatList, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Constants from 'expo-constants';
 
 const SearchComponent = ({
@@ -12,124 +11,174 @@ const SearchComponent = ({
   onClear,
   predictionLoading,
   setPredictionLoading,
+  searchMode,
+  handleTogglePress,
 }) => {
   const apiKey = Constants.expoConfig?.extra?.expoPublicGoogleMapsApiKey;
 
-  const updateSearch = async (text) => {
-    setSearch(text);
-    if (text.length < 2) {
+  useEffect(() => {
+    console.log('SearchComponent mounted');
+  }, []);
+
+  const fetchPredictions = async (input) => {
+    if (!input) {
       setPredictions([]);
-      setPredictionLoading(false);
       return;
     }
     setPredictionLoading(true);
     try {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(text)}&key=${apiKey}&language=en`
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${apiKey}`
       );
       const data = await response.json();
-      console.log('Search API Response:', JSON.stringify(data, null, 2));
       if (data.status === 'OK') {
-        setPredictions(data.predictions || []);
-      } else if (data.status === 'ZERO_RESULTS') {
-        console.log('No results for query:', text);
-        setPredictions([]);
+        setPredictions(data.predictions);
       } else {
-        console.error('Search API error:', data.status, data.error_message || 'Unknown error');
         setPredictions([]);
       }
     } catch (error) {
-      console.error('Search error:', error.message);
-      setPredictions([]);
+      console.error('Prediction fetch error:', error);
     } finally {
       setPredictionLoading(false);
     }
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.predictionItem} onPress={() => onPredictionPress(item.place_id)}>
-      <Text style={styles.predictionText}>{item.description || 'No description available'}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
-      <SearchBar
-        placeholder="Search for places, shops, or addresses"
+      <View style={styles.toggleContainer}>
+        <TouchableOpacity
+          style={[styles.toggleButton, searchMode === 'origin' ? styles.activeToggle : null]}
+          onPress={() => {
+            console.log('Origin toggle pressed');
+            handleTogglePress('origin');
+          }}
+        >
+          <Text style={[styles.toggleText, searchMode === 'origin' ? styles.activeToggleText : null]}>
+            Origin
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toggleButton, searchMode === 'destination' ? styles.activeToggle : null]}
+          onPress={() => {
+            console.log('Destination toggle pressed');
+            handleTogglePress('destination');
+          }}
+        >
+          <Text style={[styles.toggleText, searchMode === 'destination' ? styles.activeToggleText : null]}>
+            Destination
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <TextInput
+        style={styles.input}
         value={search}
-        onChangeText={updateSearch}
-        onClear={onClear}
-        inputStyle={styles.searchInput}
-        containerStyle={styles.searchContainer}
-        inputContainerStyle={styles.searchInputContainer}
-        placeholderTextColor="#888"
-        searchIcon={{ type: 'ionicon', name: 'search', color: 'black' }}
-        clearIcon={{ type: 'ionicon', name: 'close-circle', color: 'black' }}
+        onChangeText={(text) => {
+          setSearch(text);
+          fetchPredictions(text);
+        }}
+        placeholder={`Search for ${searchMode.charAt(0).toUpperCase() + searchMode.slice(1)}`}
+        onSubmitEditing={onClear}
       />
-      {predictions.length > 0 && (
-        <View style={styles.predictionsContainer}>
-          <FlatList
-            data={predictions}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.place_id}
-            keyboardShouldPersistTaps="always"
-          />
-        </View>
+      {predictionLoading && <Text style={styles.loadingText}>Loading...</Text>}
+      <FlatList
+        data={predictions}
+        keyExtractor={(item) => item.place_id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => {
+              console.log('Prediction pressed:', item.place_id);
+              onPredictionPress(item.place_id);
+            }}
+            style={styles.predictionItem}
+          >
+            <Text style={styles.prediction}>{item.description}</Text>
+          </TouchableOpacity>
+        )}
+        style={styles.predictionList}
+        pointerEvents="auto"
+      />
+      {search && (
+        <TouchableOpacity onPress={onClear} style={styles.clearButton}>
+          <Text style={styles.clearButtonText}>Clear</Text>
+        </TouchableOpacity>
       )}
-      {predictionLoading && <ActivityIndicator size="small" color="#0000ff" style={styles.loader} />}
     </View>
   );
 };
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 40,
-    width: '100%',
-    paddingHorizontal: 15,
-    zIndex: 1,
-  },
-  searchContainer: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 0,
-  },
-  searchInputContainer: {
+    top: 10,
+    left: 10,
+    right: 10,
     backgroundColor: 'white',
     borderRadius: 5,
-    borderWidth: 0,
-  },
-  searchInput: {
-    backgroundColor: 'white',
-    color: 'black',
     padding: 10,
-    fontSize: 16,
+    zIndex: 10, // Lowered zIndex
+    opacity: 1,
   },
-  predictionsContainer: {
-    backgroundColor: 'white',
-    maxHeight: 200,
-    marginTop: 5,
+  toggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
     borderRadius: 5,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    marginHorizontal: 5,
+  },
+  activeToggle: {
+    backgroundColor: '#00aaff',
+    borderColor: '#00aaff',
+  },
+  toggleText: {
+    color: '#333',
+    fontSize: 14,
+  },
+  activeToggleText: {
+    color: 'white',
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+  },
+  loadingText: {
+    color: '#00aaff',
+    textAlign: 'center',
+    marginTop: 5,
+  },
+  predictionList: {
+    maxHeight: 200,
   },
   predictionItem: {
     padding: 10,
+  },
+  prediction: {
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: '#eee',
   },
-  predictionText: {
-    fontSize: 16,
-    color: 'black',
+  clearButton: {
+    position: 'absolute',
+    right: 20,
+    top: 60,
+    backgroundColor: '#ddd',
+    padding: 5,
+    borderRadius: 5,
+    zIndex: 11,
+    opacity: 1,
   },
-  loader: {
-    marginTop: 5,
+  clearButtonText: {
+    color: '#333',
+    fontSize: 12,
   },
-};
+});
 
 export default SearchComponent;
